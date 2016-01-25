@@ -3,6 +3,7 @@
 namespace GeneratorTest;
 
 use Generator\Generator;
+use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use ReflectionClass;
 use SplFileObject;
@@ -21,6 +22,11 @@ class GeneratorTest extends PHPUnit_Framework_TestCase
         $this->Gen = new Generator(
             new SplFileObject(__DIR__ . '/template.php', 'w')
         );
+    }
+
+    public function tearDown()
+    {
+        m::close();
     }
 
     /**
@@ -73,5 +79,19 @@ EOL;
         $actual = $contents->getValue($this->Gen);
 
         $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * @test
+     */
+    public function fireまでの通し確認()
+    {
+        $expected = 1264;
+        $mock = m::mock('SplFileObject', [__DIR__ . '/template.php', 'w']);
+        $mock->shouldReceive('fwrite')->once()->andReturn($expected);
+        $Gen = new Generator($mock);
+        $Gen->setContents('FooBarBaxQux');
+        $actual = $Gen->fire();
+        $this->assertSame($expected, $actual);
     }
 }
